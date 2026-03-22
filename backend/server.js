@@ -7,7 +7,7 @@ const PORT = 4000;
 
 const dbConfig = {
   user: "system",
-  password: "YOUR_DB_PASSWORD_HERE", // set your real password locally, do not commit it
+  password: "rahul123", // set your real password locally, do not commit it
   connectString: "localhost/XEPDB1"
 };
 
