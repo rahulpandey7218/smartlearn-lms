@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLearn • Admin Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark">SL</span>
+        <span class="brand-text">SmartLearn Admin</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#overview" class="nav-link">Overview</a>
+        <a href="#users" class="nav-link">Users</a>
+        <a href="#courses" class="nav-link">Courses</a>
+        <a href="#reports" class="nav-link">Reports</a>
+      </nav>
+      <div class="top-bar-actions">
+        <div class="user-pill" id="userPill"></div>
+        <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
+          <span class="mode-icon" id="modeIcon">☀</span>
+        </button>
+        <button class="btn btn-outline btn-compact" id="logoutButton" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <section id="overview" class="dashboard-header">
+        <div>
+          <p class="dashboard-kicker">Admin control panel</p>
+          <h1 class="dashboard-title">Monitor your institute’s learning activity.</h1>
+          <p class="dashboard-subtitle">
+            View key numbers for users, courses, and engagement in one place. This prototype
+            focuses on a clear, analytics-first view for administrators.
+          </p>
+        </div>
+      </section>
+
+      <section class="admin-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2>Key metrics</h2>
+            <span class="card-tag">Live overview</span>
+          </div>
+          <div class="card-body admin-metrics" id="adminMetrics"></div>
+        </div>
+
+        <div id="users" class="card">
+          <div class="card-header">
+            <h2>User roles</h2>
+            <span class="card-tag">Distribution</span>
+          </div>
+          <div class="card-body admin-roles" id="adminRoles"></div>
+        </div>
+
+        <div id="courses" class="card">
+          <div class="card-header">
+            <h2>Courses snapshot</h2>
+            <span class="card-tag">By category</span>
+          </div>
+          <div class="card-body admin-courses" id="adminCourses"></div>
+        </div>
+
+        <div id="reports" class="card">
+          <div class="card-header">
+            <h2>Recent activity</h2>
+            <span class="card-tag">Prototype data</span>
+          </div>
+          <div class="card-body admin-activity">
+            <ul class="admin-activity-list" id="adminActivity"></ul>
+          </div>
+        </div>
+
+        <div class="card" id="createCourse">
+          <div class="card-header">
+            <h2>Create new course</h2>
+            <span class="card-tag">Admin / Instructor</span>
+          </div>
+          <div class="card-body">
+            <form id="courseForm" class="course-form" novalidate>
+              <div class="field-group">
+                <label for="courseTitle">Course title</label>
+                <div class="field-control">
+                  <input type="text" id="courseTitle" name="courseTitle" placeholder="e.g. Web Development Fundamentals">
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="courseCategory">Category</label>
+                <div class="field-control">
+                  <select id="courseCategory" name="courseCategory">
+                    <option value="">Select category</option>
+                    <option value="web">Web Development</option>
+                    <option value="cs-core">Core CS</option>
+                    <option value="interview">Interview Preparation</option>
+                    <option value="elective">Elective</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <label for="courseLevel">Level</label>
+                  <div class="field-control">
+                    <select id="courseLevel" name="courseLevel">
+                      <option value="">Select level</option>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label for="courseDuration">Duration (weeks)</label>
+                  <div class="field-control">
+                    <input type="number" id="courseDuration" name="courseDuration" min="1" max="52" value="6">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="courseMode">Mode</label>
+                <div class="field-control">
+                  <select id="courseMode" name="courseMode">
+                    <option value="online">Online</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="lab">Lab intensive</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-compact">
+                Save course (prototype)
+              </button>
+            </form>
+            <p class="course-note">
+              Prototype behavior: when you save, the course appears in the Courses snapshot
+              above to simulate creation.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>SmartLearn · Admin dashboard prototype</p>
+    </footer>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/adminDashboard.js"></script>
+</body>
+</html>

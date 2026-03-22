@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLearn • Login</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark">SL</span>
+        <span class="brand-text">SmartLearn</span>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html#home" class="nav-link">Home</a>
+        <a href="index.html#features" class="nav-link">Features</a>
+        <a href="index.html#how-it-works" class="nav-link">How it works</a>
+      </nav>
+      <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
+        <span class="mode-icon" id="modeIcon">☀</span>
+      </button>
+    </header>
+
+    <main class="auth-main">
+      <section class="auth-card">
+        <div class="auth-intro">
+          <p class="auth-kicker">Welcome back</p>
+          <h1 class="auth-title">Sign in to your learning space</h1>
+          <p class="auth-subtitle">
+            Continue where you left off, track your progress, and follow your personalised path.
+          </p>
+          <ul class="auth-highlights">
+            <li>Visual learning paths</li>
+            <li>Smart revision planner</li>
+            <li>Micro-goals and badges</li>
+          </ul>
+        </div>
+
+        <form class="auth-form" id="loginForm" novalidate>
+          <div class="field-group">
+            <label for="role">Login as</label>
+            <div class="field-control">
+              <select id="role" name="role">
+                <option value="student">Student</option>
+                <option value="instructor">Instructor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="email">Institute email</label>
+            <div class="field-control">
+              <input type="email" id="email" name="email" placeholder="you@example.com">
+            </div>
+            <p class="field-error" data-error-for="email"></p>
+          </div>
+
+          <div class="field-group">
+            <label for="password">Password</label>
+            <div class="field-control">
+              <input type="password" id="password" name="password" placeholder="Minimum 6 characters">
+            </div>
+            <p class="field-error" data-error-for="password"></p>
+          </div>
+
+          <div class="field-inline">
+            <label class="checkbox">
+              <input type="checkbox" id="remember" name="remember">
+              <span>Keep me signed in on this device</span>
+            </label>
+            <a href="#" class="link-muted" id="forgotLink">Forgot password</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit">Continue</button>
+          <p class="auth-caption">
+            Demo staff accounts: instructor@smartlearn.in / Instructor@123, admin@smartlearn.in / Admin@123.
+          </p>
+          <p class="auth-footer-text">
+            New student?
+            <a href="#" class="link-accent" id="signupToggle">Create your student account</a>
+          </p>
+        </form>
+
+        <section class="forgot-panel" id="forgotPanel">
+          <h2 class="forgot-title">Forgot your password</h2>
+          <p class="forgot-text">
+            Enter your registered email address. In this prototype, we will show a confirmation
+            message instead of sending a real email.
+          </p>
+          <form id="forgotForm" class="forgot-form" novalidate>
+            <div class="field-group">
+              <label for="forgotEmail">Institute email</label>
+              <div class="field-control">
+                <input type="email" id="forgotEmail" name="forgotEmail" placeholder="you@example.com">
+              </div>
+              <p class="field-error" data-error-for="forgotEmail"></p>
+            </div>
+            <button type="submit" class="btn btn-outline btn-compact">Send reset link (demo)</button>
+          </form>
+          <p class="forgot-message" id="forgotMessage"></p>
+        </section>
+
+        <section class="signup-panel" id="signupPanel">
+          <h2 class="signup-title">Student sign-up</h2>
+          <p class="signup-text">
+            Any learner can sign up as a student with a unique email and password. Instructors and admins
+            are created only from the institute database.
+          </p>
+          <form id="signupForm" class="signup-form" novalidate>
+            <div class="field-group">
+              <label for="signupName">Full name</label>
+              <div class="field-control">
+                <input type="text" id="signupName" name="signupName" placeholder="Your name">
+              </div>
+              <p class="field-error" data-error-for="signupName"></p>
+            </div>
+            <div class="field-group">
+              <label for="signupEmail">Institute email</label>
+              <div class="field-control">
+                <input type="email" id="signupEmail" name="signupEmail" placeholder="you@example.com">
+              </div>
+              <p class="field-error" data-error-for="signupEmail"></p>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label for="signupPassword">Password</label>
+                <div class="field-control">
+                  <input type="password" id="signupPassword" name="signupPassword" placeholder="Minimum 6 characters">
+                </div>
+                <p class="field-error" data-error-for="signupPassword"></p>
+              </div>
+              <div class="field-group">
+                <label for="signupConfirm">Confirm password</label>
+                <div class="field-control">
+                  <input type="password" id="signupConfirm" name="signupConfirm" placeholder="Repeat password">
+                </div>
+                <p class="field-error" data-error-for="signupConfirm"></p>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-outline btn-compact">Sign up as student</button>
+          </form>
+          <p class="signup-message" id="signupMessage"></p>
+        </section>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>SmartLearn · LMS prototype · Phase 2</p>
+    </footer>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

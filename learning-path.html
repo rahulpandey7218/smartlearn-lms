@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLearn • Learning Path</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark">SL</span>
+        <span class="brand-text">SmartLearn</span>
+      </div>
+      <nav class="nav-links">
+        <a href="dashboard-student.html" class="nav-link">Dashboard</a>
+        <a href="#" class="nav-link active">Learning path</a>
+      </nav>
+      <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
+        <span class="mode-icon" id="modeIcon">☀</span>
+      </button>
+    </header>
+
+    <main class="path-main">
+      <section class="path-header">
+        <div>
+          <p class="dashboard-kicker">Personalised map</p>
+          <h1 class="dashboard-title">Web Development learning path</h1>
+          <p class="dashboard-subtitle">
+            Tap a topic to move it from not started to in progress to mastered.
+          </p>
+        </div>
+        <button class="btn btn-outline btn-compact" id="resetPath" type="button">
+          Reset path
+        </button>
+      </section>
+
+      <section class="path-grid" id="learningPath">
+        <div class="path-column">
+          <h2 class="path-column-title">Not started</h2>
+          <div class="path-column-body" data-status="not-started"></div>
+        </div>
+        <div class="path-column">
+          <h2 class="path-column-title">In progress</h2>
+          <div class="path-column-body" data-status="in-progress"></div>
+        </div>
+        <div class="path-column">
+          <h2 class="path-column-title">Mastered</h2>
+          <div class="path-column-body" data-status="mastered"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>SmartLearn · Learning path prototype</p>
+    </footer>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/learningPath.js"></script>
+</body>
+</html>
+

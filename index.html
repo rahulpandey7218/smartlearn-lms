@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLearn LMS</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark">SL</span>
+        <span class="brand-text">SmartLearn</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#home" class="nav-link active">Home</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How it works</a>
+        <a href="login.html" class="nav-link primary-link">Login</a>
+      </nav>
+      <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
+        <span class="mode-icon" id="modeIcon">☀</span>
+      </button>
+    </header>
+
+    <main>
+      <section id="home" class="hero">
+        <div class="hero-text">
+          <p class="hero-kicker">A web-based online learning management system</p>
+          <h1>Learn smarter with personalized paths, not just playlists.</h1>
+          <p class="hero-subtitle">
+            SmartLearn helps students and instructors focus on what matters: clear learning paths,
+            smart revision plans, and meaningful progress insights.
+          </p>
+          <div class="hero-actions">
+            <a href="login.html" class="btn btn-primary">Get started</a>
+            <a href="#features" class="btn btn-outline">Explore features</a>
+          </div>
+          <div class="hero-metrics">
+            <div class="metric">
+              <span class="metric-value">3</span>
+              <span class="metric-label">Learning roles</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">5+</span>
+              <span class="metric-label">Smart modules</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">100%</span>
+              <span class="metric-label">Responsive UI</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="glass-panel panel-main">
+            <div class="panel-header">
+              <span class="panel-title">Student Snapshot</span>
+              <span class="panel-tag">Today</span>
+            </div>
+            <div class="panel-body">
+              <div class="progress-row">
+                <span class="progress-label">Web Development</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 68%"></div>
+                </div>
+                <span class="progress-value">68%</span>
+              </div>
+              <div class="progress-row">
+                <span class="progress-label">DBMS</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 42%"></div>
+                </div>
+                <span class="progress-value">42%</span>
+              </div>
+              <div class="progress-row">
+                <span class="progress-label">Aptitude</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 80%"></div>
+                </div>
+                <span class="progress-value">80%</span>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <span class="chip chip-weak">Needs revision: DBMS Joins</span>
+              <span class="chip chip-strong">Strong: HTML & CSS</span>
+            </div>
+          </div>
+
+          <div class="glass-panel panel-side">
+            <div class="panel-header">
+              <span class="panel-title">Today’s micro-goals</span>
+            </div>
+            <ul class="micro-goals">
+              <li class="goal done">Revise 2 completed topics</li>
+              <li class="goal">Attempt 1 quiz</li>
+              <li class="goal">Write 3 key notes</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="section">
+        <h2 class="section-title">What makes SmartLearn different</h2>
+        <p class="section-subtitle">
+          Designed for students and small institutes who want structure, clarity, and guidance.
+        </p>
+        <div class="grid grid-3">
+          <article class="feature-card">
+            <h3>Personal learning paths</h3>
+            <p>
+              Move through topics step by step with a visual path map that tracks what is
+              not started, in progress, and mastered.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Smart study planner</h3>
+            <p>
+              Turn your exam date and available hours into a weekly study plan so you always
+              know what to study next.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Skill-gap analytics</h3>
+            <p>
+              Simple dashboards highlight weak topics and recommend what to revise before
+              your next quiz.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Mentor & doubt space</h3>
+            <p>
+              A dedicated space where learners can post questions and mentors can respond,
+              keeping discussions organised.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Gamified learning</h3>
+            <p>
+              Micro-goals, streaks, and badges keep learners motivated to show up every day
+              and complete small tasks.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Focus mode</h3>
+            <p>
+              A high-contrast, distraction-free theme designed for long study sessions and
+              better readability.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="how-it-works" class="section section-muted">
+        <h2 class="section-title">How SmartLearn fits your semester</h2>
+        <div class="grid grid-3 timeline">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h3>Set your goal</h3>
+            <p>
+              Choose your courses, exam date, and weekly study time. SmartLearn creates your
+              first learning path.
+            </p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <h3>Study and attempt</h3>
+            <p>
+              Follow the suggested modules, attempt quizzes, and record notes while you learn.
+            </p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <h3>Review and improve</h3>
+            <p>
+              Use the analytics dashboard to find weak areas, plan revision, and unlock badges
+              as you progress.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>SmartLearn · A web-based LMS project</p>
+      <p>B.Tech 3rd Year · Online Learning Management System</p>
+    </footer>
+  </div>
+
+  <script src="js/theme.js"></script>
+</body>
+</html>
+

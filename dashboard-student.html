@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLearn • Student Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark">SL</span>
+        <span class="brand-text">SmartLearn</span>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="#courses" class="nav-link">Courses</a>
+        <a href="#planner" class="nav-link">Planner</a>
+        <a href="#analytics" class="nav-link">Analytics</a>
+      </nav>
+      <div class="top-bar-actions">
+        <div class="user-pill" id="userPill"></div>
+        <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
+          <span class="mode-icon" id="modeIcon">☀</span>
+        </button>
+        <button class="btn btn-outline btn-compact" id="logoutButton" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <section class="dashboard-header">
+        <div>
+          <p class="dashboard-kicker">Student dashboard</p>
+          <h1 class="dashboard-title">Good to see you learning consistently.</h1>
+          <p class="dashboard-subtitle">
+            Your personalised path, study planner, and micro-goals keep everything in one place.
+          </p>
+        </div>
+        <a href="learning-path.html" class="btn btn-outline">View learning path</a>
+      </section>
+
+      <section id="courses" class="dashboard-grid">
+        <div class="card card-progress">
+          <div class="card-header">
+            <h2>Active courses</h2>
+            <span class="card-tag">Semester 5</span>
+          </div>
+          <div class="card-body card-progress-body" id="courseProgressList"></div>
+        </div>
+
+        <div class="card card-available">
+          <div class="card-header">
+            <h2>Available courses</h2>
+            <span class="card-tag">Join a session</span>
+          </div>
+          <div class="card-body card-progress-body" id="availableCoursesList"></div>
+        </div>
+
+        <div id="planner" class="card card-planner">
+          <div class="card-header">
+            <h2>Study planner</h2>
+            <span class="card-tag">Exam mode</span>
+          </div>
+          <div class="card-body planner-body">
+            <div class="planner-inputs">
+              <div class="field-group compact">
+                <label for="examDate">Exam date</label>
+                <div class="field-control">
+                  <input type="date" id="examDate" name="examDate">
+                </div>
+              </div>
+              <div class="field-group compact">
+                <label for="weeklyHours">Hours per week</label>
+                <div class="field-control">
+                  <input type="number" id="weeklyHours" name="weeklyHours" min="1" max="60" value="8">
+                </div>
+              </div>
+              <button id="planButton" class="btn btn-primary btn-compact" type="button">Generate plan</button>
+            </div>
+            <div class="planner-weeks" id="plannerWeeks"></div>
+          </div>
+        </div>
+
+        <div id="analytics" class="card card-analytics">
+          <div class="card-header">
+            <h2>Today’s focus</h2>
+            <span class="card-tag">Micro-goals</span>
+          </div>
+          <div class="card-body analytics-body">
+            <ul class="micro-goals micro-goals-dashboard" id="microGoalsList"></ul>
+            <div class="streak-row">
+              <div>
+                <p class="streak-label">Learning streak</p>
+                <p class="streak-value" id="streakValue">0 days</p>
+              </div>
+              <button class="btn btn-outline btn-compact" id="streakButton" type="button">
+                Mark today as done
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-analytics">
+          <div class="card-header">
+            <h2>Announcements</h2>
+            <span class="card-tag">From instructors</span>
+          </div>
+          <div class="card-body analytics-body">
+            <ul class="announcement-list" id="announcementList"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>SmartLearn · Student dashboard prototype</p>
+    </footer>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
