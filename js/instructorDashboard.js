@@ -11,114 +11,138 @@ const instructorCoursesList = document.getElementById("instructorCoursesList");
 const upcomingSessionsList = document.getElementById("upcomingSessionsList");
 const instructorAnnouncementsList = document.getElementById("instructorAnnouncementsList");
 const instructorAnnouncementForm = document.getElementById("instructorAnnouncementForm");
-const INSTRUCTOR_ANNOUNCEMENTS_KEY = "smartlearn-instructor-announcements";
+const instructorCourseForm = document.getElementById("instructorCourseForm");
+const instructorSessionForm = document.getElementById("instructorSessionForm");
 
-const instructorCourses = [
-  { name: "Web Development Fundamentals", enrolled: 32, status: "Live" },
-  { name: "Database Management Systems", enrolled: 28, status: "Live" },
-  { name: "Programming with Python", enrolled: 24, status: "Planned" }
-];
+const API_BASE = "http://localhost:4000/api";
+const userName = window.localStorage.getItem("smartlearn-user-name") || "Instructor";
 
-const upcomingSessions = [
-  "Today 7:00 PM · Web Dev · Layouts and Flexbox",
-  "Tomorrow 6:30 PM · DBMS · Normalisation and Keys",
-  "Saturday 5:00 PM · Python · Functions and Modules"
-];
-
-function loadInstructorAnnouncements() {
-  const raw = window.localStorage.getItem(INSTRUCTOR_ANNOUNCEMENTS_KEY);
-  if (!raw) {
-    return [
-      "Quiz 1 for Web Development opens tonight at 9 PM.",
-      "DBMS assignment 2 deadline extended to Sunday.",
-      "Next live session will focus on project doubts."
-    ];
-  }
+async function fetchData(endpoint) {
   try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length) {
-      return parsed;
-    }
-    return [];
-  } catch (error) {
+    const res = await fetch(`${API_BASE}/${endpoint}`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(`Error fetching ${endpoint}:`, err);
     return [];
   }
 }
 
-function saveInstructorAnnouncements(list) {
-  window.localStorage.setItem(INSTRUCTOR_ANNOUNCEMENTS_KEY, JSON.stringify(list));
+async function postData(endpoint, data) {
+  try {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(`Error posting to ${endpoint}:`, err);
+    return { success: false };
+  }
 }
 
-let instructorAnnouncements = loadInstructorAnnouncements();
-
-function renderInstructorCourses() {
-  if (!instructorCoursesList) {
-    return;
-  }
+async function renderInstructorCourses() {
+  if (!instructorCoursesList) return;
+  const courses = await fetchData("courses");
   instructorCoursesList.innerHTML = "";
-  instructorCourses.forEach(function (course) {
+  courses.forEach(course => {
     const row = document.createElement("div");
     row.className = "available-course-row";
-    const text = document.createElement("div");
-    text.className = "available-course-text";
-    text.textContent = course.name + " · " + course.enrolled + " learners";
-    const status = document.createElement("span");
-    status.className = "card-tag";
-    status.textContent = course.status;
-    row.appendChild(text);
-    row.appendChild(status);
+    const dateText = course.date ? ` · Starts ${new Date(course.date).toLocaleDateString()}` : "";
+    row.innerHTML = `
+      <div class="available-course-text">${course.name}${dateText} · ${course.enrolled} learners</div>
+      <span class="card-tag">${course.status}</span>
+    `;
     instructorCoursesList.appendChild(row);
   });
 }
 
-function renderUpcomingSessions() {
-  if (!upcomingSessionsList) {
-    return;
-  }
+async function renderUpcomingSessions() {
+  if (!upcomingSessionsList) return;
+  const sessions = await fetchData("sessions");
   upcomingSessionsList.innerHTML = "";
-  upcomingSessions.forEach(function (text) {
+  sessions.forEach(session => {
     const item = document.createElement("li");
-    item.textContent = text;
+    const dt = session.dateTime ? new Date(session.dateTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : "";
+    item.innerHTML = `<strong>${dt}</strong> · ${session.text}`;
     upcomingSessionsList.appendChild(item);
   });
 }
 
-function renderInstructorAnnouncements() {
-  if (!instructorAnnouncementsList) {
-    return;
-  }
+async function renderInstructorAnnouncements() {
+  if (!instructorAnnouncementsList) return;
+  const anns = await fetchData("announcements");
   instructorAnnouncementsList.innerHTML = "";
-  instructorAnnouncements.forEach(function (text) {
+  anns.forEach(ann => {
     const item = document.createElement("li");
-    item.textContent = text;
+    item.textContent = ann.text;
     instructorAnnouncementsList.appendChild(item);
   });
 }
 
-function handleInstructorAnnouncementSubmit(event) {
-  event.preventDefault();
-  if (!instructorAnnouncementForm) {
-    return;
-  }
-  const input = document.getElementById("instructorAnnouncementText");
-  if (!input) {
-    return;
-  }
-  const value = input.value.trim();
-  if (!value) {
-    return;
-  }
-  instructorAnnouncements.unshift(value);
-  saveInstructorAnnouncements(instructorAnnouncements);
-  renderInstructorAnnouncements();
-  input.value = "";
+if (instructorAnnouncementForm) {
+  instructorAnnouncementForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("instructorAnnouncementText");
+    const text = input.value.trim();
+    if (text) {
+      await postData("announcements", { text, from: userName });
+      input.value = "";
+      renderInstructorAnnouncements();
+    }
+  });
 }
 
+if (instructorCourseForm) {
+  instructorCourseForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById("newCourseName");
+    const dateInput = document.getElementById("newCourseDate");
+    const name = nameInput.value.trim();
+    const date = dateInput.value;
+    if (name) {
+      await postData("courses", { name, date, creator: userName });
+      nameInput.value = "";
+      dateInput.value = "";
+      renderInstructorCourses();
+    }
+  });
+}
+
+if (instructorSessionForm) {
+  instructorSessionForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const textInput = document.getElementById("newSessionText");
+    const dateTimeInput = document.getElementById("newSessionDateTime");
+    const text = textInput.value.trim();
+    const dateTime = dateTimeInput.value;
+    if (text && dateTime) {
+      await postData("sessions", { text, dateTime, instructor: userName });
+      textInput.value = "";
+      dateTimeInput.value = "";
+      renderUpcomingSessions();
+    }
+  });
+}
+
+// Video Call Integration
+window.startVideoCall = function() {
+  const roomName = "SmartLearn-" + Math.random().toString(36).substring(7);
+  const jitsiUrl = `https://meet.jit.si/${roomName}`;
+  
+  // Notify students via announcement
+  const announcementText = `🔴 LIVE CLASS STARTED: Join now at ${jitsiUrl}`;
+  postData("announcements", { text: announcementText, from: userName });
+  
+  // Open the call in a new window
+  window.open(jitsiUrl, '_blank');
+  alert("Live class started! Students have been notified via announcements.");
+  renderInstructorAnnouncements();
+};
+
+// Initial render
 renderInstructorCourses();
 renderUpcomingSessions();
 renderInstructorAnnouncements();
-
-if (instructorAnnouncementForm) {
-  instructorAnnouncementForm.addEventListener("submit", handleInstructorAnnouncementSubmit);
-}
 

@@ -27,14 +27,22 @@ function applyUserBadge() {
     return;
   }
   const role = window.localStorage.getItem("smartlearn-session-role");
-  const email = window.localStorage.getItem("smartlearn-session-email");
-  if (!role || !email) {
+  const name = window.localStorage.getItem("smartlearn-user-name") || "Guest";
+  
+  if (!role) {
     userPill.textContent = "Guest";
     return;
   }
-  const shortEmail = email.split("@")[0];
+  
   const label = role.charAt(0).toUpperCase() + role.slice(1);
-  userPill.textContent = label + " · " + shortEmail;
+  
+  // Real-time Identity Icon Logic
+  let icon = "👤";
+  if (name.includes("(Google)")) icon = "🌐";
+  if (name.includes("(Github)")) icon = "🐙";
+  if (name.includes("(Apple)")) icon = "🍎";
+  
+  userPill.innerHTML = `<span style="margin-right:8px;">${icon}</span> ${label} · ${name}`;
 }
 
 function handleLogout() {

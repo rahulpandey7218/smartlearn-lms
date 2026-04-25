@@ -4,6 +4,34 @@ const adminCourses = document.getElementById("adminCourses");
 const adminActivity = document.getElementById("adminActivity");
 const courseForm = document.getElementById("courseForm");
 
+const API_BASE = "http://localhost:4000/api";
+const adminName = window.localStorage.getItem("smartlearn-user-name") || "Admin";
+
+async function fetchData(endpoint) {
+  try {
+    const res = await fetch(`${API_BASE}/${endpoint}`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(`Error fetching ${endpoint}:`, err);
+    return [];
+  }
+}
+
+async function postData(endpoint, data) {
+  try {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error(`Error posting to ${endpoint}:`, err);
+    return { success: false };
+  }
+}
+
 function requireAdmin() {
   const role = window.localStorage.getItem("smartlearn-session-role");
   if (role !== "admin") {
@@ -13,163 +41,85 @@ function requireAdmin() {
 
 requireAdmin();
 
-const roleData = [
-  { label: "Students", value: 10 },
-  { label: "Instructors", value: 2 },
-  { label: "Admins", value: 1 }
-];
-
-const courseData = [
-  { label: "Web Development", value: 6 },
-  { label: "Core CS", value: 5 },
-  { label: "Interview Prep", value: 4 },
-  { label: "Electives", value: 3 }
-];
-
-const activityData = [
-  "5 new learners enrolled in Web Development Fundamentals.",
-  "Instructor Ananya published Quiz 3 for DBMS.",
-  "8 certificates generated in the last 24 hours.",
-  "2 new courses pending approval."
-];
-
-function getCreatedCoursesCount() {
-  const raw = window.localStorage.getItem("smartlearn-courses-created");
-  const parsed = raw ? parseInt(raw, 10) : 2;
-  if (Number.isNaN(parsed)) {
-    return 0;
-  }
-  return parsed;
-}
-
-function setCreatedCoursesCount(value) {
-  window.localStorage.setItem("smartlearn-courses-created", String(value));
-}
-
-function buildMetricsData() {
-  const totalCourses = courseData.reduce(function (sum, item) {
-    return sum + item.value;
-  }, 0);
-  const createdCount = getCreatedCoursesCount();
-  const categories = courseData.length;
-  const pending = createdCount;
-  return [
-    { label: "Total courses", value: totalCourses },
-    { label: "New courses this session", value: createdCount },
-    { label: "Course categories", value: categories },
-    { label: "Pending approval (prototype)", value: pending }
-  ];
-}
-
-function renderAdminMetrics() {
-  if (!adminMetrics) {
-    return;
-  }
-  adminMetrics.innerHTML = "";
-  buildMetricsData().forEach(function (item) {
-    const card = document.createElement("div");
-    card.className = "admin-metric-card";
-    const value = document.createElement("div");
-    value.className = "admin-metric-value";
-    value.textContent = String(item.value);
-    const label = document.createElement("div");
-    label.className = "admin-metric-label";
-    label.textContent = item.label;
-    card.appendChild(value);
-    card.appendChild(label);
-    adminMetrics.appendChild(card);
-  });
+async function renderAdminMetrics() {
+  if (!adminMetrics) return;
+  const courses = await fetchData("courses");
+  const activity = await fetchData("activity");
+  
+  adminMetrics.innerHTML = `
+    <div class="admin-metric-card">
+      <div class="admin-metric-value">${courses.length}</div>
+      <div class="admin-metric-label">Total courses</div>
+    </div>
+    <div class="admin-metric-card">
+      <div class="admin-metric-value">${activity.length}</div>
+      <div class="admin-metric-label">System Activities</div>
+    </div>
+    <div class="admin-metric-card">
+      <div class="admin-metric-value">3</div>
+      <div class="admin-metric-label">User Roles</div>
+    </div>
+  `;
 }
 
 function renderAdminRoles() {
-  if (!adminRoles) {
-    return;
-  }
+  if (!adminRoles) return;
+  const roleData = [
+    { label: "Students", value: 85 },
+    { label: "Instructors", value: 45 },
+    { label: "Admins", value: 25 }
+  ];
   adminRoles.innerHTML = "";
-  roleData.forEach(function (item) {
+  roleData.forEach(item => {
     const row = document.createElement("div");
     row.className = "admin-role-row";
-    const label = document.createElement("span");
-    label.textContent = item.label;
-    const bar = document.createElement("div");
-    bar.className = "admin-role-bar";
-    const fill = document.createElement("div");
-    fill.className = "admin-role-fill";
-    fill.style.width = String(item.value) + "px";
-    bar.appendChild(fill);
-    const value = document.createElement("span");
-    value.className = "admin-role-value";
-    value.textContent = String(item.value);
-    row.appendChild(label);
-    row.appendChild(bar);
-    row.appendChild(value);
+    row.innerHTML = `
+      <span>${item.label}</span>
+      <div class="admin-role-bar"><div class="admin-role-fill" style="width: ${item.value}px"></div></div>
+      <span class="admin-role-value">${item.value}</span>
+    `;
     adminRoles.appendChild(row);
   });
 }
 
-function renderAdminCourses() {
-  if (!adminCourses) {
-    return;
-  }
+async function renderAdminCourses() {
+  if (!adminCourses) return;
+  const courses = await fetchData("courses");
   adminCourses.innerHTML = "";
-  courseData.forEach(function (item) {
+  courses.forEach(course => {
     const row = document.createElement("div");
     row.className = "admin-course-row";
-    const label = document.createElement("span");
-    label.textContent = item.label;
-    const value = document.createElement("span");
-    value.className = "admin-course-value";
-    value.textContent = String(item.value) + " courses";
-    row.appendChild(label);
-    row.appendChild(value);
+    row.innerHTML = `<span>${course.name}</span><span class="admin-course-value">By ${course.createdBy}</span>`;
     adminCourses.appendChild(row);
   });
 }
 
-function renderAdminActivity() {
-  if (!adminActivity) {
-    return;
-  }
+async function renderAdminActivity() {
+  if (!adminActivity) return;
+  const activity = await fetchData("activity");
   adminActivity.innerHTML = "";
-  activityData.forEach(function (text) {
+  activity.slice(0, 8).forEach(text => {
     const item = document.createElement("li");
     item.textContent = text;
     adminActivity.appendChild(item);
   });
 }
 
-function handleCourseSubmit(event) {
+async function handleCourseSubmit(event) {
   event.preventDefault();
-  if (!courseForm) {
-    return;
-  }
   const title = courseForm.courseTitle.value.trim();
   const category = courseForm.courseCategory.value;
-  const level = courseForm.courseLevel.value;
-  if (!title || !category || !level) {
-    return;
-  }
-  activityData.unshift("New course created: " + title + " (" + level + ").");
-  const categoryItem = courseData.find(function (item) {
-    return item.label === "Web Development" && category === "web";
-  }) || courseData.find(function (item) {
-    return item.label === "Core CS" && category === "cs-core";
-  }) || courseData.find(function (item) {
-    return item.label === "Interview Prep" && category === "interview";
-  }) || courseData.find(function (item) {
-    return item.label === "Electives" && category === "elective";
-  });
-  if (categoryItem) {
-    categoryItem.value += 1;
-  }
-  const createdCount = getCreatedCoursesCount() + 1;
-  setCreatedCoursesCount(createdCount);
+  if (!title) return;
+
+  await postData("courses", { name: title, creator: adminName });
+  courseForm.reset();
+  
   renderAdminMetrics();
   renderAdminCourses();
   renderAdminActivity();
-  courseForm.reset();
 }
 
+// Initial load
 renderAdminMetrics();
 renderAdminRoles();
 renderAdminCourses();

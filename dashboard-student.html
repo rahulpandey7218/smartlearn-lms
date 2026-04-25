@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartLearn • Student Dashboard</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- html2pdf.js for Real Certificate Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -14,12 +16,15 @@
         <span class="brand-text">SmartLearn</span>
       </div>
       <nav class="nav-links">
-        <a href="index.html" class="nav-link">Home</a>
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="learning-path.html" class="nav-link">Path</a>
         <a href="#courses" class="nav-link">Courses</a>
+        <a href="javascript:void(0)" class="nav-link" onclick="openQuiz()">Quiz</a>
         <a href="#planner" class="nav-link">Planner</a>
         <a href="#analytics" class="nav-link">Analytics</a>
       </nav>
       <div class="top-bar-actions">
+        <a href="index.html" class="btn btn-outline btn-compact" style="text-decoration: none;">Home</a>
         <div class="user-pill" id="userPill"></div>
         <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
           <span class="mode-icon" id="modeIcon">☀</span>
@@ -49,12 +54,86 @@
           <div class="card-body card-progress-body" id="courseProgressList"></div>
         </div>
 
+        <!-- Lesson Viewer Modal (Phase 3) -->
+        <div id="lessonModal" class="google-modal" style="display: none;">
+          <div class="google-modal-content" style="max-width: 800px; height: 80vh; display: flex; flex-direction: column;">
+            <div class="google-header">
+              <span>Lesson Viewer: Web Development Fundamentals</span>
+              <button onclick="closeLessonViewer()" style="background: none; border: none; color: white; cursor: pointer; font-size: 20px;">×</button>
+            </div>
+            <div style="flex: 1; padding: 20px; overflow-y: auto; background: var(--bg);">
+              <div style="margin-bottom: 20px; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; background: #000;">
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/qz0aGYrrlhU" frameborder="0" allowfullscreen></iframe>
+              </div>
+              <h3 style="margin-bottom: 10px;">Module 1: Introduction to HTML5</h3>
+              <p style="color: var(--muted); font-size: 14px; line-height: 1.6;">
+                In this lesson, we cover the semantic structure of HTML5, including tags like &lt;header&gt;, &lt;main&gt;, and &lt;footer&gt;. 
+                Download the PDF notes below for revision.
+              </p>
+              <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-outline btn-compact" onclick="alert('Downloading PDF...')">📄 Download Notes</button>
+                <button class="btn btn-primary btn-compact" onclick="openQuiz()">✍️ Take Module Quiz</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Modal (Phase 4) -->
+        <div id="quizModal" class="google-modal" style="display: none;">
+          <div class="google-modal-content" style="max-width: 500px;">
+            <div class="google-header"><span>Module Quiz: HTML5 Basics</span></div>
+            <div style="padding: 30px;">
+              <p style="margin-bottom: 20px;"><strong>Q1: Which tag is used for the largest heading?</strong></p>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-outline" style="justify-content: flex-start;" onclick="submitQuiz(true)">A) &lt;h1&gt;</button>
+                <button class="btn btn-outline" style="justify-content: flex-start;" onclick="submitQuiz(false)">B) &lt;h6&gt;</button>
+                <button class="btn btn-outline" style="justify-content: flex-start;" onclick="submitQuiz(false)">C) &lt;head&gt;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate Modal (Smart Brain Addition) -->
+        <div id="certificateModal" class="google-modal" style="display: none;">
+          <div class="google-modal-content" style="max-width: 600px; background: #fff; color: #333; border: 15px solid #2c3e50; padding: 40px; text-align: center;">
+            <h1 style="font-family: 'Times New Roman', serif; font-size: 40px; color: #2c3e50; margin-bottom: 10px;">CERTIFICATE</h1>
+            <p style="font-size: 18px; color: #7f8c8d; margin-bottom: 30px;">OF COMPLETION</p>
+            <p style="font-size: 16px; margin-bottom: 10px;">THIS IS TO CERTIFY THAT</p>
+            <h2 id="certName" style="font-family: 'Georgia', serif; font-size: 32px; border-bottom: 2px solid #2c3e50; display: inline-block; padding: 0 40px; margin-bottom: 20px;">Rahul Pandey</h2>
+            <p style="font-size: 16px; margin-bottom: 10px;">HAS SUCCESSFULLY COMPLETED THE COURSE</p>
+            <h3 style="font-size: 24px; color: #e67e22; margin-bottom: 40px;">Web Development Fundamentals</h3>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 40px;">
+              <div style="text-align: center;">
+                <p id="certDate" style="border-top: 1px solid #333; padding-top: 5px;">April 25, 2026</p>
+                <p style="font-size: 12px; color: #7f8c8d;">DATE</p>
+              </div>
+              <div style="text-align: center;">
+                <p style="font-family: 'Cursive', serif; font-size: 20px; border-top: 1px solid #333; padding-top: 5px;">SmartLearn Team</p>
+                <p style="font-size: 12px; color: #7f8c8d;">INSTRUCTOR</p>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="closeCertificate()" style="margin-top: 40px;">Download & Close</button>
+          </div>
+        </div>
+
         <div class="card card-available">
           <div class="card-header">
             <h2>Available courses</h2>
             <span class="card-tag">Join a session</span>
           </div>
           <div class="card-body card-progress-body" id="availableCoursesList"></div>
+        </div>
+
+        <div class="card card-analytics">
+          <div class="card-header">
+            <h2>Leaderboard</h2>
+            <span class="card-tag">Top 5</span>
+          </div>
+          <div class="card-body analytics-body">
+            <div id="leaderboardList" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Leaderboard items will be injected here -->
+            </div>
+          </div>
         </div>
 
         <div id="planner" class="card card-planner">

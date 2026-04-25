@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartLearn • Instructor Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-mark">SL</span>
+        <span class="brand-text">SmartLearn</span>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="index.html" class="nav-link">Student View</a>
+        <a href="#courses" class="nav-link">My Courses</a>
+        <a href="#sessions" class="nav-link">Sessions</a>
+        <a href="#announcements" class="nav-link">Announcements</a>
+      </nav>
+      <div class="top-bar-actions">
+        <a href="index.html" class="btn btn-outline btn-compact" style="text-decoration: none;">Home</a>
+        <div class="user-pill" id="userPill"></div>
+        <button class="mode-toggle" id="modeToggle" aria-label="Toggle focus mode">
+          <span class="mode-icon" id="modeIcon">☀</span>
+        </button>
+        <button class="btn btn-outline btn-compact" id="logoutButton" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <section class="dashboard-header">
+        <div>
+          <p class="dashboard-kicker">Instructor dashboard</p>
+          <h1 class="dashboard-title">Welcome back, Professor.</h1>
+          <p class="dashboard-subtitle">
+            Manage your courses, schedule live sessions, and post announcements for your students.
+          </p>
+        </div>
+      </section>
+
+      <section id="courses" class="dashboard-grid">
+        <div class="card card-progress">
+          <div class="card-header">
+            <h2>Active Courses</h2>
+            <span class="card-tag">Teaching</span>
+          </div>
+          <div class="card-body card-progress-body" id="instructorCoursesList"></div>
+          <div class="card-footer">
+            <form id="instructorCourseForm" class="planner-inputs compact">
+              <div class="field-control">
+                <input type="text" id="newCourseName" placeholder="Course Name" required>
+              </div>
+              <div class="field-control">
+                <input type="date" id="newCourseDate" title="Start Date">
+              </div>
+              <button class="btn btn-primary btn-compact" type="submit">Create Course</button>
+            </form>
+          </div>
+        </div>
+
+        <div id="sessions" class="card card-available">
+          <div class="card-header">
+            <h2>Upcoming Sessions</h2>
+            <span class="card-tag">Live</span>
+          </div>
+          <div class="card-body analytics-body">
+            <ul class="announcement-list" id="upcomingSessionsList"></ul>
+          </div>
+          <div class="card-footer" style="display: flex; flex-direction: column; gap: 10px;">
+            <form id="instructorSessionForm" class="planner-inputs compact">
+              <div class="field-control">
+                <input type="text" id="newSessionText" placeholder="Session Topic" required>
+              </div>
+              <div class="field-control">
+                <input type="datetime-local" id="newSessionDateTime" required>
+              </div>
+              <button class="btn btn-primary btn-compact" type="submit">Add Session</button>
+            </form>
+            <button class="btn btn-outline btn-compact" style="border-color: var(--accent-strong); color: var(--accent-strong);" onclick="startVideoCall()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+              Start Live Class Now
+            </button>
+          </div>
+        </div>
+
+        <div id="announcements" class="card card-planner">
+          <div class="card-header">
+            <h2>Post Announcement</h2>
+            <span class="card-tag">Global</span>
+          </div>
+          <div class="card-body planner-body">
+            <form id="instructorAnnouncementForm" class="planner-inputs">
+              <div class="field-group compact">
+                <label for="instructorAnnouncementText">Announcement text</label>
+                <div class="field-control">
+                  <input type="text" id="instructorAnnouncementText" name="text" placeholder="Type something for your students..." required>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-compact" type="submit">Post announcement</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card card-analytics">
+          <div class="card-header">
+            <h2>Recent Announcements</h2>
+            <span class="card-tag">History</span>
+          </div>
+          <div class="card-body analytics-body">
+            <ul class="announcement-list" id="instructorAnnouncementsList"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>SmartLearn · Instructor dashboard prototype</p>
+    </footer>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/instructorDashboard.js"></script>
+</body>
+</html>
