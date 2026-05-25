@@ -7,8 +7,8 @@ const PORT = 4000;
 
 const dbConfig = {
   user: "system",
-  password: "rahul123", // set your real password locally, do not commit it
-  connectString: "localhost/XE" // Changed from XEPDB1 to XE for standard local setup
+  password: "", // set your real password locally, do not commit it
+  connectString: "" // Changed from XEPDB1 to XE for standard local setup
 };
 
 app.use(cors());
