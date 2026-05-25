@@ -56,6 +56,11 @@ async function renderInstructorCourses() {
     `;
     instructorCoursesList.appendChild(row);
   });
+
+  const sessionCourse = document.getElementById("sessionCourse");
+  if (sessionCourse) {
+    sessionCourse.innerHTML = courses.map(c => `<option value="${c.name}">${c.name}</option>`).join("");
+  }
 }
 
 async function renderUpcomingSessions() {
@@ -113,14 +118,32 @@ if (instructorCourseForm) {
 if (instructorSessionForm) {
   instructorSessionForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const textInput = document.getElementById("newSessionText");
-    const dateTimeInput = document.getElementById("newSessionDateTime");
-    const text = textInput.value.trim();
-    const dateTime = dateTimeInput.value;
-    if (text && dateTime) {
-      await postData("sessions", { text, dateTime, instructor: userName });
-      textInput.value = "";
-      dateTimeInput.value = "";
+    const courseName = document.getElementById("sessionCourse").value;
+    const topic = document.getElementById("sessionTopic").value;
+    const youtubeLink = document.getElementById("sessionYoutube").value;
+    const fileInput = document.getElementById("sessionFile");
+    const noteName = fileInput.files.length > 0 ? fileInput.files[0].name : "";
+    const time = new Date().toLocaleString();
+
+    const res = await postData("sessions", {
+      courseName,
+      topic,
+      time,
+      type: "Live",
+      youtubeLink,
+      noteName
+    });
+
+    if (res.success) {
+      alert(`✅ Session started for ${courseName}! Students notified.`);
+
+      // Auto-post announcement for the live class
+      await postData("announcements", {
+        text: `🔴 LIVE NOW: ${topic} for ${courseName}. Join session to access materials.`,
+        from: userName
+      });
+
+      instructorSessionForm.reset();
       renderUpcomingSessions();
     }
   });
@@ -145,4 +168,8 @@ window.startVideoCall = function() {
 renderInstructorCourses();
 renderUpcomingSessions();
 renderInstructorAnnouncements();
+// If there's an activity feed to render
+if (typeof renderInstructorActivity === 'function') {
+  renderInstructorActivity();
+}
 

@@ -29,39 +29,137 @@
     <main class="path-main">
       <section class="path-header">
         <div>
-          <p class="dashboard-kicker">Personalised map</p>
-          <h1 class="dashboard-title">Web Development learning path</h1>
+          <p class="dashboard-kicker">AI-Generated Map</p>
+          <h1 class="dashboard-title" id="courseTitleDisplay">Loading Learning Path...</h1>
           <p class="dashboard-subtitle">
-            Tap a topic to move it from not started to in progress to mastered.
+            AI has analyzed your course and created a personalized roadmap for you.
           </p>
         </div>
-        <button class="btn btn-outline btn-compact" id="resetPath" type="button">
-          Reset path
-        </button>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline btn-compact" onclick="window.openQuiz(window.localStorage.getItem('smartlearn-active-course'))">
+            ✍️ AI Quiz
+          </button>
+          <button class="btn btn-primary btn-compact" id="resetPath" type="button">
+            Reset path
+          </button>
+        </div>
       </section>
 
-      <section class="path-grid" id="learningPath">
-        <div class="path-column">
-          <h2 class="path-column-title">Not started</h2>
-          <div class="path-column-body" data-status="not-started"></div>
-        </div>
-        <div class="path-column">
-          <h2 class="path-column-title">In progress</h2>
-          <div class="path-column-body" data-status="in-progress"></div>
-        </div>
-        <div class="path-column">
-          <h2 class="path-column-title">Mastered</h2>
-          <div class="path-column-body" data-status="mastered"></div>
-        </div>
-      </section>
+      <div class="dashboard-grid" style="grid-template-columns: 1fr 350px; margin-top: 20px;">
+        <!-- Left Side: Path -->
+        <section class="path-grid" id="learningPath" style="margin-top: 0;">
+          <div class="path-column">
+            <h2 class="path-column-title">Not started</h2>
+            <div class="path-column-body" data-status="not-started"></div>
+          </div>
+          <div class="path-column">
+            <h2 class="path-column-title">In progress</h2>
+            <div class="path-column-body" data-status="in-progress"></div>
+          </div>
+          <div class="path-column">
+            <h2 class="path-column-title">Mastered</h2>
+            <div class="path-column-body" data-status="mastered"></div>
+          </div>
+        </section>
+
+        <!-- Right Side: AI Features -->
+        <aside class="ai-features-sidebar">
+          <div class="card">
+            <div class="card-header">
+              <h2>Smart YouTube Suggester</h2>
+              <span class="card-tag">AI Search</span>
+            </div>
+            <div class="card-body" id="aiVideoList" style="display: flex; flex-direction: column; gap: 15px;">
+              <!-- AI Videos injected here -->
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+              <h2>Teacher Uploads</h2>
+              <span class="card-tag">Official</span>
+            </div>
+            <div class="card-body" id="teacherUploadsList" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Uploads injected here -->
+              <div class="upload-item" style="padding: 10px; border-radius: 8px; background: var(--bg-elevated); font-size: 13px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">📄</span>
+                <div>
+                  <div style="font-weight: 500;">Lecture_Notes_01.pdf</div>
+                  <div style="font-size: 11px; color: var(--muted);">Shared by Professor</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+              <h2>My Study Notes</h2>
+              <span class="card-tag">Personal</span>
+            </div>
+            <div class="card-body">
+              <textarea id="personalStudyNotes" placeholder="Write your important points here..." style="width: 100%; min-height: 200px; background: var(--bg-elevated); color: white; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 15px; font-size: 13px; line-height: 1.5; resize: vertical;"></textarea>
+              <div id="notesStatus" style="font-size: 11px; color: var(--accent-strong); margin-top: 8px; text-align: right;">All points auto-saved.</div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </main>
 
+    <!-- AI Topic Info Modal -->
+    <div id="topicInfoModal" class="google-modal" style="display: none;">
+      <div class="google-modal-content" style="max-width: 700px;">
+        <div class="google-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 25px;">
+          <span id="modalTopicTitle">AI Topic Analysis</span>
+          <button onclick="document.getElementById('topicInfoModal').style.display='none'" style="background:none; border:none; color:white; cursor:pointer; font-size:24px;">&times;</button>
+        </div>
+        <div style="padding: 35px; background: var(--bg);">
+          <div id="modalTopicContent" style="color: var(--text); font-size: 15px; line-height: 1.7;">
+            <!-- AI Content Injected Here -->
+          </div>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+            <p style="font-size: 12px; color: var(--muted); margin: 0;">AI has analyzed this topic for your specific course.</p>
+            <button class="btn btn-primary btn-compact" onclick="document.getElementById('topicInfoModal').style.display='none'">Got it!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Modal (Imported from dashboard logic) -->
+    <div id="quizModal" class="google-modal" style="display: none;">
+      <div class="google-modal-content" style="max-width: 600px;">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="certificateModal" class="google-modal" style="display: none;">
+      <div class="google-modal-content" style="max-width: 600px; background: #fff; color: #333; border: 15px solid #2c3e50; padding: 40px; text-align: center;">
+        <h1 style="font-family: 'Times New Roman', serif; font-size: 40px; color: #2c3e50; margin-bottom: 10px;">CERTIFICATE</h1>
+        <p style="font-size: 18px; color: #7f8c8d; margin-bottom: 30px;">OF COMPLETION</p>
+        <p style="font-size: 16px; margin-bottom: 10px;">THIS IS TO CERTIFY THAT</p>
+        <h2 id="certName" style="font-family: 'Georgia', serif; font-size: 32px; border-bottom: 2px solid #2c3e50; display: inline-block; padding: 0 40px; margin-bottom: 20px;">Student</h2>
+        <p style="font-size: 16px; margin-bottom: 10px;">HAS SUCCESSFULLY COMPLETED THE COURSE</p>
+        <h3 style="font-size: 24px; color: #e67e22; margin-bottom: 40px;">Course Name</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 40px;">
+          <div style="text-align: center;">
+            <p id="certDate" style="border-top: 1px solid #333; padding-top: 5px;">May 25, 2026</p>
+            <p style="font-size: 12px; color: #7f8c8d;">DATE</p>
+          </div>
+          <div style="text-align: center;">
+            <p style="font-family: 'Cursive', serif; font-size: 20px; border-top: 1px solid #333; padding-top: 5px;">SmartLearn AI</p>
+            <p style="font-size: 12px; color: #7f8c8d;">VERIFIED BY</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="closeCertificate()" style="margin-top: 40px;">Download & Close</button>
+      </div>
+    </div>
+
     <footer class="page-footer">
-      <p>SmartLearn · Learning path prototype</p>
+      <p>SmartLearn · AI Dynamic Learning Path Engine</p>
     </footer>
   </div>
 
   <script src="js/theme.js"></script>
+  <script src="js/dashboard.js"></script>
   <script src="js/learningPath.js"></script>
 </body>
 </html>

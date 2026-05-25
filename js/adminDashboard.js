@@ -28,7 +28,7 @@ async function postData(endpoint, data) {
     return await res.json();
   } catch (err) {
     console.error(`Error posting to ${endpoint}:`, err);
-    return { success: false };
+    return { success: false, error: "Connection failed" };
   }
 }
 
@@ -83,16 +83,70 @@ function renderAdminRoles() {
 }
 
 async function renderAdminCourses() {
-  if (!adminCourses) return;
+  const adminCourseList = document.getElementById("adminCourseList");
+  const courseCountTag = document.getElementById("courseCount");
+  if (!adminCourseList) return;
+  
   const courses = await fetchData("courses");
-  adminCourses.innerHTML = "";
+  adminCourseList.innerHTML = "";
+  
+  if (courseCountTag) courseCountTag.textContent = `${courses.length} Active`;
+
+  if (courses.length === 0) {
+    adminCourseList.innerHTML = `<p style="color: var(--muted); padding: 20px;">No courses found. Create your first course below.</p>`;
+    return;
+  }
+
   courses.forEach(course => {
-    const row = document.createElement("div");
-    row.className = "admin-course-row";
-    row.innerHTML = `<span>${course.name}</span><span class="admin-course-value">By ${course.createdBy}</span>`;
-    adminCourses.appendChild(row);
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.border = "1px solid var(--border-subtle)";
+    card.innerHTML = `
+      <div class="card-header" style="padding: 15px;">
+        <h3 style="margin: 0; font-size: 18px;">${course.name}</h3>
+      </div>
+      <div class="card-body" style="padding: 15px;">
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px; height: 40px; overflow: hidden;">${course.description || 'Professional course content.'}</p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline btn-compact" style="flex: 1; font-size: 12px;" onclick="editCourse('${course.id}', '${course.name}', '${course.description}')">Edit</button>
+          <button class="btn btn-primary btn-compact" style="flex: 1; font-size: 12px; background: #ff4757; border-color: #ff4757;" onclick="deleteCourse('${course.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+    adminCourseList.appendChild(card);
   });
 }
+
+window.deleteCourse = async function(id) {
+  if (confirm("Are you sure you want to delete this course? Students will lose access.")) {
+    try {
+      const res = await fetch(`${API_BASE}/courses/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Course deleted successfully!");
+        renderAdminCourses();
+        if (typeof renderAdminMetrics === 'function') renderAdminMetrics();
+      } else {
+        alert("❌ Error deleting course: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("❌ Failed to connect to server.");
+    }
+  }
+};
+
+window.editCourse = function(id, name, desc) {
+  const newName = prompt("Enter new course name:", name);
+  const newDesc = prompt("Enter new description:", desc);
+  if (newName && newDesc) {
+    fetch(`${API_BASE}/courses/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName, description: newDesc })
+    }).then(() => renderAdminCourses());
+  }
+};
 
 async function renderAdminActivity() {
   if (!adminActivity) return;
@@ -105,18 +159,20 @@ async function renderAdminActivity() {
   });
 }
 
-async function handleCourseSubmit(event) {
-  event.preventDefault();
-  const title = courseForm.courseTitle.value.trim();
-  const category = courseForm.courseCategory.value;
-  if (!title) return;
-
-  await postData("courses", { name: title, creator: adminName });
-  courseForm.reset();
-  
-  renderAdminMetrics();
-  renderAdminCourses();
-  renderAdminActivity();
+// Update existing course creation logic to handle description
+if (courseForm) {
+  courseForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("courseName") ? document.getElementById("courseName").value : (courseForm.courseTitle ? courseForm.courseTitle.value : "");
+    const description = document.getElementById("courseDesc") ? document.getElementById("courseDesc").value : "";
+    const res = await postData("courses", { name, description, instructor: adminName });
+    if (res.success) {
+      courseForm.reset();
+      renderAdminMetrics();
+      renderAdminCourses();
+      renderAdminActivity();
+    }
+  });
 }
 
 // Initial load
@@ -124,7 +180,3 @@ renderAdminMetrics();
 renderAdminRoles();
 renderAdminCourses();
 renderAdminActivity();
-
-if (courseForm) {
-  courseForm.addEventListener("submit", handleCourseSubmit);
-}

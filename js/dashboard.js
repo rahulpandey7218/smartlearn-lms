@@ -90,10 +90,16 @@ function requireRole(allowedRoles) {
 
 requireRole(["student", "instructor"]);
 
+// User-Specific Helper: Get unique key for the current logged-in user
+function getUserKey(baseKey) {
+  const email = window.localStorage.getItem("smartlearn-session-email") || "guest";
+  return `${baseKey}-${email.replace(/[^a-zA-Z0-9]/g, "_")}`;
+}
+
 const ENROLLED_KEY = "smartlearn-enrolled-courses";
 
 function getEnrolledCourses() {
-  const raw = window.localStorage.getItem(ENROLLED_KEY);
+  const raw = window.localStorage.getItem(getUserKey(ENROLLED_KEY));
   if (!raw) return [];
   try {
     return JSON.parse(raw);
@@ -103,34 +109,53 @@ function getEnrolledCourses() {
 }
 
 function setEnrolledCourses(list) {
-  window.localStorage.setItem(ENROLLED_KEY, JSON.stringify(list));
+  window.localStorage.setItem(getUserKey(ENROLLED_KEY), JSON.stringify(list));
 }
 
 async function renderAvailableCourses() {
   if (!availableCoursesList) return;
-  const courses = await fetchData("courses");
-  const enrolled = getEnrolledCourses();
   
+  // Strict API Sync: Get only courses that exist in the Backend Database
+  const allCourses = await fetchData("courses");
+  const enrolled = getEnrolledCourses();
   availableCoursesList.innerHTML = "";
-  courses.forEach(course => {
-    const row = document.createElement("div");
-    row.className = "available-course-row";
+
+  if (allCourses.length === 0) {
+    availableCoursesList.innerHTML = `
+      <div class="card" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+        <p style="color: var(--muted); font-size: 14px;">No courses are currently active in the system.</p>
+      </div>`;
+    return;
+  }
+
+  allCourses.forEach(course => {
     const isEnrolled = enrolled.includes(course.name);
-    
+    const row = document.createElement("div");
+    row.className = "card course-card";
+    row.style.marginBottom = "15px";
     row.innerHTML = `
-      <div class="available-course-text">${course.name}</div>
-      <button class="btn ${isEnrolled ? 'btn-primary' : 'btn-outline'} btn-compact">
-        ${isEnrolled ? 'Go to session' : 'Join session'}
-      </button>
+      <div class="card-header">
+        <h2>${course.name}</h2>
+        <span class="card-tag">${isEnrolled ? 'Enrolled' : 'Available'}</span>
+      </div>
+      <div class="card-body">
+        <p style="height: 40px; overflow: hidden;">${course.description || "Expert-led training in " + course.name}</p>
+        <button class="btn ${isEnrolled ? 'btn-outline' : 'btn-primary'}" style="width: 100%; margin-top: 15px;">
+          ${isEnrolled ? 'View Learning Path' : 'Join Course'}
+        </button>
+      </div>
     `;
-    
+
     row.querySelector("button").addEventListener("click", () => {
       if (!isEnrolled) {
         enrolled.push(course.name);
         setEnrolledCourses(enrolled);
+        alert(`🎉 Successfully joined ${course.name}!`);
         renderCourseProgress();
         renderAvailableCourses();
       }
+      // Set the context and go to path
+      window.localStorage.setItem("smartlearn-active-course", course.name);
       window.location.href = "learning-path.html";
     });
     availableCoursesList.appendChild(row);
@@ -139,15 +164,28 @@ async function renderAvailableCourses() {
 
 async function renderCourseProgress() {
   if (!courseProgressList) return;
+  
+  // 1. Fetch latest courses from API to verify existence
+  const allCourses = await fetchData("courses");
   const enrolled = getEnrolledCourses();
+  
+  // 2. Synchronize: Remove courses from Student's local list if they no longer exist in Backend
+  const validEnrolled = enrolled.filter(courseName => 
+    allCourses.some(c => c.name === courseName)
+  );
+  
+  if (validEnrolled.length !== enrolled.length) {
+    setEnrolledCourses(validEnrolled);
+  }
+
   courseProgressList.innerHTML = "";
   
-  if (!enrolled.length) {
+  if (!validEnrolled.length) {
     courseProgressList.innerHTML = "<p class='dashboard-subtitle'>Join a course below to start learning.</p>";
     return;
   }
 
-  enrolled.forEach(name => {
+  validEnrolled.forEach(name => {
     const row = document.createElement("div");
     row.className = "progress-row dashboard-progress-row";
     row.style.flexDirection = "column";
@@ -162,13 +200,18 @@ async function renderCourseProgress() {
       </div>
       <div class="progress-bar" style="width: 100%;"><div class="progress-fill" style="width: 20%"></div></div>
       <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-        <button class="btn btn-outline btn-compact" style="font-size: 10px; flex: 1;" onclick="openLessonViewer()">Lesson</button>
+        <button class="btn btn-outline btn-compact" style="font-size: 10px; flex: 1;" onclick="goToPath('${name}')">Go to Session</button>
         <button class="btn btn-primary btn-compact" style="font-size: 10px; flex: 1;" onclick="openQuiz('${name}')">AI Quiz</button>
       </div>
     `;
     courseProgressList.appendChild(row);
   });
 }
+
+window.goToPath = function(courseName) {
+  window.localStorage.setItem("smartlearn-active-course", courseName);
+  window.location.href = "learning-path.html";
+};
 
 async function renderAnnouncements() {
   if (!announcementList) return;
@@ -236,9 +279,7 @@ const quizPool = {
     { q: "Which CSS property controls text size?", options: ["font-style", "text-size", "font-size"], correct: 2 },
     { q: "How do you select an element with id 'demo'?", options: [".demo", "#demo", "demo"], correct: 1 },
     { q: "What is the correct HTML for adding a background color?", options: ["<body bg='yellow'>", "<body style='background-color:yellow;'>", "<background>yellow</background>"], correct: 1 },
-    { q: "Which HTML element is used to specify a footer for a document?", options: ["<bottom>", "<footer>", "<section>"], correct: 1 },
-    { q: "In CSS, what is the correct option to select all p elements inside a div?", options: ["div p", "div + p", "div.p"], correct: 0 },
-    { q: "Which HTML tag is used to define an internal style sheet?", options: ["<css>", "<script>", "<style>"], correct: 2 }
+    { q: "Which HTML element is used to specify a footer for a document?", options: ["<bottom>", "<footer>", "<section>"], correct: 1 }
   ],
   "Database Management Systems": [
     { q: "What does SQL stand for?", options: ["Structured Query Language", "Strong Question Language", "Structured Question Layout"], correct: 0 },
@@ -250,23 +291,31 @@ const quizPool = {
     { q: "Which SQL keyword is used to sort the result-set?", options: ["SORT BY", "ORDER BY", "ARRANGE BY"], correct: 1 },
     { q: "How can you return all the records from a table named 'Persons'?", options: ["SELECT * FROM Persons", "SELECT [all] FROM Persons", "SELECT Persons"], correct: 0 },
     { q: "Which SQL statement is used to return only different values?", options: ["SELECT UNIQUE", "SELECT DISTINCT", "SELECT DIFFERENT"], correct: 1 },
-    { q: "Which operator is used to select a range of values?", options: ["WITHIN", "BETWEEN", "RANGE"], correct: 1 },
-    { q: "What is a primary key?", options: ["A key that opens all tables", "A unique identifier for a record", "A common field between tables"], correct: 1 },
-    { q: "Which SQL constraint ensures that a column cannot have a NULL value?", options: ["UNIQUE", "NOT NULL", "CHECK"], correct: 1 }
+    { q: "Which operator is used to select a range of values?", options: ["WITHIN", "BETWEEN", "RANGE"], correct: 1 }
   ],
-  "General Computer Science": [
-    { q: "Which of the following is an Operating System?", options: ["Chrome", "Windows", "Office"], correct: 1 },
-    { q: "What is the brain of a computer?", options: ["RAM", "CPU", "Hard Disk"], correct: 1 },
-    { q: "Which language is primarily used for Android apps?", options: ["Swift", "Kotlin/Java", "C#"], correct: 1 },
-    { q: "What does HTTP stand for?", options: ["Hypertext Transfer Protocol", "High Text Transfer Process", "Hyperlink Text Trade Protocol"], correct: 0 },
-    { q: "Which data structure uses LIFO?", options: ["Queue", "Stack", "Array"], correct: 1 },
-    { q: "What is 1010 in decimal?", options: ["8", "10", "12"], correct: 1 },
-    { q: "Which is not a programming language?", options: ["Python", "HTML", "Java"], correct: 1 },
-    { q: "What does RAM stand for?", options: ["Read Access Memory", "Random Access Memory", "Rapid Action Module"], correct: 1 },
-    { q: "Who is known as the father of computers?", options: ["Bill Gates", "Charles Babbage", "Alan Turing"], correct: 1 },
-    { q: "Which device is used to connect to the internet?", options: ["Monitor", "Router/Modem", "Scanner"], correct: 1 },
-    { q: "Which of these is a volatile memory?", options: ["Hard Drive", "RAM", "ROM"], correct: 1 },
-    { q: "What is the main purpose of an IP address?", options: ["To store data", "To identify a device on a network", "To run programs"], correct: 1 }
+  "Artificial Intelligence": [
+    { q: "What is the primary goal of AI?", options: ["To make computers faster", "To simulate human intelligence", "To build robots"], correct: 1 },
+    { q: "Which language is most popular for AI development?", options: ["C++", "Java", "Python"], correct: 2 },
+    { q: "What does NLP stand for in AI?", options: ["Natural Language Processing", "Neural Logic Programming", "Node Level Path"], correct: 0 },
+    { q: "Who is known as the father of AI?", options: ["Alan Turing", "John McCarthy", "Elon Musk"], correct: 1 },
+    { q: "A Turing Test is used to determine what?", options: ["Processing speed", "Machine intelligence", "Network security"], correct: 1 },
+    { q: "What is a Neural Network modeled after?", options: ["Human Brain", "Social Media", "The Internet"], correct: 0 },
+    { q: "Which of these is a subset of Machine Learning?", options: ["Big Data", "Deep Learning", "Cloud Computing"], correct: 1 },
+    { q: "What is 'Supervised Learning'?", options: ["Learning with labels", "Learning by itself", "Learning from mistakes"], correct: 0 },
+    { q: "What is a 'Bot' in AI?", options: ["A hardware part", "An automated program", "A type of virus"], correct: 1 },
+    { q: "What is Computer Vision?", options: ["Watching movies", "Machine understanding images", "A new type of monitor"], correct: 1 }
+  ],
+  "Python": [
+    { q: "What is the correct file extension for Python files?", options: [".pt", ".py", ".pyt"], correct: 1 },
+    { q: "How do you create a variable in Python?", options: ["var x = 5", "x = 5", "int x = 5"], correct: 1 },
+    { q: "Which function is used to output text to the screen?", options: ["echo()", "print()", "console.log()"], correct: 1 },
+    { q: "How do you start a FOR loop in Python?", options: ["for x in y:", "for(x=0; x<y; x++)", "foreach x in y"], correct: 0 },
+    { q: "Which collection is ordered, changeable, and allows duplicates?", options: ["Tuple", "Set", "List"], correct: 2 },
+    { q: "How do you insert a comment in Python code?", options: ["//", "/* */", "#"], correct: 2 },
+    { q: "Which keyword is used to create a function?", options: ["function", "def", "fun"], correct: 1 },
+    { q: "What is the result of 3 * 3?", options: ["6", "9", "33"], correct: 1 },
+    { q: "How do you handle exceptions in Python?", options: ["try/catch", "try/except", "do/handle"], correct: 1 },
+    { q: "Which method removes whitespace from string start/end?", options: ["strip()", "trim()", "cut()"], correct: 0 }
   ]
 };
 
@@ -277,22 +326,28 @@ window.openQuiz = function(subject) {
 
   const modalContent = modal.querySelector(".google-modal-content");
   
-  // If no subject is passed (e.g. from Nav Bar), show a Subject Selection screen
-  if (!subject) {
-    const enrolled = getEnrolledCourses();
-    if (enrolled.length === 0) {
-      alert("Please join a course first to take a quiz!");
-      return;
+  // 1. Precise Subject Recognition Logic
+  let matchedSubject = "";
+  const normalizedSearch = (subject || "").toLowerCase().trim();
+
+  for (const key in quizPool) {
+    if (normalizedSearch.includes(key.toLowerCase())) {
+      matchedSubject = key;
+      break;
     }
-    
+  }
+
+  // 2. If no exact subject is found, show Subject Selection
+  if (!matchedSubject) {
+    const enrolled = getEnrolledCourses();
     modal.style.display = "flex";
     modalContent.innerHTML = `
-      <div class="google-header"><span>Select Quiz Subject</span></div>
+      <div class="google-header"><span>AI Subject Selection</span></div>
       <div style="padding: 30px; text-align: center;">
-        <p style="margin-bottom: 20px; color: var(--muted);">Choose a subject to verify your knowledge:</p>
+        <p style="margin-bottom: 20px; color: var(--muted);">AI could not automatically identify the quiz pool for "<strong>${subject || 'this course'}</strong>". Please select the subject manually:</p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${enrolled.map(name => `
-            <button class="btn btn-outline" style="width: 100%;" onclick="openQuiz('${name}')">${name}</button>
+          ${Object.keys(quizPool).map(key => `
+            <button class="btn btn-outline" style="width: 100%;" onclick="openQuiz('${key}')">${key}</button>
           `).join('')}
         </div>
       </div>
@@ -300,13 +355,12 @@ window.openQuiz = function(subject) {
     return;
   }
 
-  activeQuizSubject = subject;
+  activeQuizSubject = matchedSubject;
   currentQuizQuestion = 0;
   quizScore = 0;
   
-  // AI Simulation: Randomly pick 10 questions from the pool
-  // Use subject-specific pool, or generic CS pool if subject not found
-  const pool = quizPool[subject] || quizPool["General Computer Science"];
+  // 3. AI Randomization: Pick 10 questions specifically for this subject
+  const pool = quizPool[matchedSubject];
   activeQuizData = [...pool].sort(() => 0.5 - Math.random()).slice(0, 10);
   
   renderQuizQuestion();

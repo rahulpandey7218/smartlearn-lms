@@ -61,28 +61,33 @@
           </div>
         </div>
 
-        <div id="sessions" class="card card-available">
+        <div id="sessions" class="card">
           <div class="card-header">
-            <h2>Upcoming Sessions</h2>
-            <span class="card-tag">Live</span>
+            <h2>Start Live Class / Uploads</h2>
+            <span class="card-tag">Official</span>
           </div>
-          <div class="card-body analytics-body">
-            <ul class="announcement-list" id="upcomingSessionsList"></ul>
-          </div>
-          <div class="card-footer" style="display: flex; flex-direction: column; gap: 10px;">
-            <form id="instructorSessionForm" class="planner-inputs compact">
-              <div class="field-control">
-                <input type="text" id="newSessionText" placeholder="Session Topic" required>
+          <div class="card-body">
+            <form id="instructorSessionForm">
+              <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:4px; font-size:12px;">Select Course</label>
+                <select id="sessionCourse" class="btn-outline" style="width:100%; padding:8px; background:var(--bg-elevated); color:white; border-radius:6px;"></select>
               </div>
-              <div class="field-control">
-                <input type="datetime-local" id="newSessionDateTime" required>
+              <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:4px; font-size:12px;">Session Topic</label>
+                <input type="text" id="sessionTopic" placeholder="e.g. Intro to React" class="btn-outline" style="width:100%; padding:8px; background:var(--bg-elevated); color:white; border-radius:6px;" required>
               </div>
-              <button class="btn btn-primary btn-compact" type="submit">Add Session</button>
+              <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:4px; font-size:12px;">YouTube Lecture Link</label>
+                <input type="url" id="sessionYoutube" placeholder="https://youtube.com/..." class="btn-outline" style="width:100%; padding:8px; background:var(--bg-elevated); color:white; border-radius:6px;">
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="display:block; margin-bottom:4px; font-size:12px;">Upload Notes (PDF/Docs)</label>
+                <div style="position: relative; width: 100%;">
+                  <input type="file" id="sessionFile" class="btn-outline" style="width:100%; padding:8px; background:var(--bg-elevated); color:white; border-radius:6px; cursor: pointer;" accept=".pdf,.doc,.docx">
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;" type="submit">Start & Notify Students</button>
             </form>
-            <button class="btn btn-outline btn-compact" style="border-color: var(--accent-strong); color: var(--accent-strong);" onclick="startVideoCall()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-              Start Live Class Now
-            </button>
           </div>
         </div>
 

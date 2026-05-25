@@ -43,35 +43,62 @@ let sharedData = {
 
 // --- ROUTES FOR MANAGING DATA ---
 
-// 1. Courses
+// 2. Courses API
 app.get("/api/courses", (req, res) => res.json(sharedData.courses));
+
 app.post("/api/courses", (req, res) => {
-  const { name, status, creator, date } = req.body;
+  const { name, description, instructor } = req.body;
   const newCourse = { 
     id: Date.now(), 
     name, 
-    status: status || "Live", 
-    enrolled: 0, 
-    createdBy: creator || "Unknown",
-    date: date || null
+    description: description || "New Course", 
+    instructor: instructor || "Admin" 
   };
   sharedData.courses.push(newCourse);
-  sharedData.activityLog.unshift(`New course "${name}" created by ${creator}.`);
+  sharedData.activityLog.unshift(`New course "${name}" created by ${instructor || "Admin"}.`);
   res.json({ success: true, course: newCourse });
 });
 
-// 2. Sessions
+app.put("/api/courses/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+  const courseIndex = sharedData.courses.findIndex(c => c.id == id);
+  if (courseIndex > -1) {
+    sharedData.courses[courseIndex].name = name;
+    sharedData.courses[courseIndex].description = description;
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: "Course not found" });
+  }
+});
+
+app.delete("/api/courses/:id", (req, res) => {
+  const { id } = req.params;
+  sharedData.courses = sharedData.courses.filter(c => c.id != id);
+  res.json({ success: true });
+});
+
+// 3. Sessions & Uploads API
 app.get("/api/sessions", (req, res) => res.json(sharedData.sessions));
+
 app.post("/api/sessions", (req, res) => {
-  const { text, instructor, dateTime } = req.body;
+  const { courseName, topic, time, type, youtubeLink, noteName } = req.body;
   const newSession = { 
     id: Date.now(), 
-    text, 
-    instructor: instructor || "Instructor",
-    dateTime: dateTime || null
+    courseName, 
+    topic, 
+    time, 
+    type, 
+    youtubeLink: youtubeLink || "",
+    noteName: noteName || ""
   };
   sharedData.sessions.push(newSession);
-  sharedData.activityLog.unshift(`New session added: "${text}" by ${instructor}.`);
+  
+  // If teacher uploaded a note, add to global uploads
+  if (noteName) {
+    sharedData.activityLog.unshift(`Teacher uploaded note: ${noteName} for ${courseName}`);
+  }
+  
   res.json({ success: true, session: newSession });
 });
 
