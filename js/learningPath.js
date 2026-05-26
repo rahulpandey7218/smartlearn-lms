@@ -38,7 +38,8 @@ const aiKnowledgeBase = {
 const statusOrder = ["not-started", "in-progress", "mastered"];
 
 function getActiveCourse() {
-  const active = window.localStorage.getItem("smartlearn-active-course");
+  const emailKey = getUserKey("smartlearn-active-course");
+  const active = window.localStorage.getItem(emailKey);
   if (!active) {
     window.location.href = "dashboard-student.html";
     return "";
@@ -176,7 +177,33 @@ function showTopicInfo(topic) {
   }
 
   content.innerHTML = info;
+  
+  // Add a visible Status Toggle in the Modal for better UX
+  const currentStatus = loadStatus(topic);
+  const statusDisplay = currentStatus.replace("-", " ").toUpperCase();
+  const statusHtml = `
+    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Current Status</span>
+        <div style="font-weight: 700; color: var(--accent-strong);">${statusDisplay}</div>
+      </div>
+      <button class="btn btn-primary btn-compact" id="modalStatusToggle">Mark as ${nextStatus(currentStatus).replace("-", " ").toUpperCase()}</button>
+    </div>
+  `;
+  content.innerHTML += statusHtml;
+
   modal.style.display = "flex";
+
+  // Handle the toggle inside the modal
+  const toggleBtn = document.getElementById("modalStatusToggle");
+  if (toggleBtn) {
+    toggleBtn.onclick = () => {
+      const updated = nextStatus(currentStatus);
+      saveStatus(topic, updated);
+      renderPath();
+      showTopicInfo(topic); // Refresh modal
+    };
+  }
 }
 
 // Personal Notes System (Auto-save)
@@ -206,15 +233,17 @@ async function renderPath() {
   const courseName = getActiveCourse();
   if (courseTitleDisplay) courseTitleDisplay.textContent = courseName + " Path";
 
-  // First, verify if the course still exists in the system (Synchronization Check)
+  // 1. ADVANCED SYNC: Fetch full course context (Title + Description) from Oracle DB
+  let courseContext = { name: courseName, description: "" };
   try {
     const allCourses = await (await fetch("http://localhost:4000/api/courses")).json();
-    const exists = allCourses.some(c => c.name === courseName);
-    if (!exists) {
+    const courseObj = allCourses.find(c => c.name === courseName);
+    if (!courseObj) {
       alert("⚠️ This course has been removed by the Admin.");
       window.location.href = "dashboard-student.html";
       return;
     }
+    courseContext.description = courseObj.description || "";
   } catch (err) {
     console.error("Sync Error:", err);
   }
@@ -228,7 +257,7 @@ async function renderPath() {
     console.error("Error fetching uploads:", err);
   }
 
-  // Render Teacher Uploads
+  // ... (render teacher uploads code remains same)
   const teacherUploadsList = document.getElementById("teacherUploadsList");
   if (teacherUploadsList) {
     teacherUploadsList.innerHTML = "";
@@ -263,54 +292,41 @@ async function renderPath() {
 // AI-Simulated Path Generation
   let pathData = aiKnowledgeBase[courseName];
   
-  // AI DYNAMIC SEARCH ENGINE: If not in knowledge base, generate specific videos using YouTube's Search Logic
+  // AI DYNAMIC SEARCH ENGINE: If not in knowledge base, generate specific videos using Advanced Content Matching
   if (!pathData) {
-    // POWERFUL SUBJECT-SPECIFIC YOUTUBE ENGINE (No Generic Fallbacks)
-    const dynamicVideoMap = {
-      "python": "rfscVS0vtbw",
-      "java": "eIrMb66zuSI",
-      "react": "bMknfKXIFA8",
-      "c++": "8jLOx1hD3_o",
-      "c#": "M70K9Zk6KNo",
-      "javascript": "W6NZfCO5SIk",
-      "html": "qz0aGYrrlhU",
-      "css": "qz0aGYrrlhU",
-      "node": "32M1al-Y6Ag",
-      "express": "7H_QH9ipp0Q",
-      "mongodb": "O5XWfS_P1pU",
-      "sql": "HXV3zeBB80w",
-      "database": "HXV3zeBB80w",
-      "machine learning": "GwIo3gDZCVQ",
-      "artificial intelligence": "06-AZXmwHjo",
-      "cyber security": "3Kq1MIfTWCE",
-      "dsa": "8hly31Kuy2g",
-      "data structures": "8hly31Kuy2g",
-      "algorithms": "8hly31Kuy2g",
-      "php": "zZ6vybT1HQs",
-      "android": "fis26HvvDII",
-      "flutter": "nQt07ZPr7T8",
-      "aws": "ENrzD9HAZK4",
-      "cloud": "ENrzD9HAZK4",
-      "devops": "hQcFE0RD0cQ",
-      "git": "RGOj5yH7evk",
-      "github": "RGOj5yH7evk",
-      "linux": "sWbUDq4S6Yw",
-      "data science": "ua-CiDNNj30",
-      "deep learning": "6mU7-5A5sN4",
-      "blockchain": "k0S2A53t-9c",
-      "full stack": "qz0aGYrrlhU"
-    };
+    // POWERFUL SUBJECT-SPECIFIC YOUTUBE ENGINE (Expanded for Content-Based Matching)
+    const dynamicVideoMap = [
+      { tags: ["python", "basics", "intro"], id: "rfscVS0vtbw", title: "Python for Beginners" },
+      { tags: ["python", "advanced", "expert", "optimization"], id: "b093aqXIznU", title: "Advanced Python Masterclass" },
+      { tags: ["java", "intro", "basics"], id: "eIrMb66zuSI", title: "Java Full Course" },
+      { tags: ["java", "advanced", "spring", "enterprise"], id: "mSjiX2fTirQ", title: "Advanced Java & Spring" },
+      { tags: ["react", "frontend", "web"], id: "bMknfKXIFA8", title: "React JS Tutorial" },
+      { tags: ["physics", "quantum", "advanced"], id: "b1t41Q3xRM8", title: "Quantum Physics Mastery" },
+      { tags: ["physics", "basics", "intro", "mechanics"], id: "b-94nU-7q1U", title: "Foundations of Physics" },
+      { tags: ["sql", "database", "query"], id: "HXV3zeBB80w", title: "SQL Mastery Course" },
+      { tags: ["dsa", "algorithms", "data structures"], id: "8hly31Kuy2g", title: "Complete DSA Guide" },
+      { tags: ["ai", "machine learning", "neural"], id: "06-AZXmwHjo", title: "AI & ML Foundations" },
+      { tags: ["cyber", "security", "hacking"], id: "3Kq1MIfTWCE", title: "Cyber Security Mastery" }
+    ];
 
-    const searchKey = courseName.toLowerCase().trim();
-    let videoId = ""; 
-    
-    // AI Subject Matcher: Find the best video ID for ANY subject
-    for (const key in dynamicVideoMap) {
-      if (searchKey.includes(key)) {
-        videoId = dynamicVideoMap[key];
-        break;
+    const fullContext = (courseContext.name + " " + courseContext.description).toLowerCase();
+    let bestMatch = null;
+    let highestScore = 0;
+
+    // ADVANCED WEIGHTED MATCHER: Ranks videos by content relevance
+    dynamicVideoMap.forEach(video => {
+      let score = 0;
+      video.tags.forEach(tag => {
+        if (fullContext.includes(tag)) score += 1;
+      });
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = video;
       }
-    }
+    });
+
+    let videoId = bestMatch ? bestMatch.id : "UNP03fDSj1U"; // Fallback to "Art of Learning"
+    let videoTitle = bestMatch ? bestMatch.title : "Technical Mastery";
 
     pathData = {
       topics: [
@@ -322,9 +338,9 @@ async function renderPath() {
         `${courseName} Real-world Project`,
         `${courseName} Certification Exam`
       ],
-      videos: videoId ? [
-        { title: `🚀 ${courseName.toUpperCase()} MASTERCLASS`, id: videoId }
-      ] : [] // Empty if no match found, handled in UI
+      videos: [
+        { title: `🚀 ${courseName.toUpperCase()}: ${videoTitle}`, id: videoId }
+      ]
     };
   }
 
@@ -351,6 +367,32 @@ async function renderPath() {
         aiVideoList.appendChild(div);
       });
     }
+  }
+
+  // AI Technical Library: Wikipedia & Book Integration
+  const aiLibrarySection = document.getElementById("aiLibrarySection");
+  if (aiLibrarySection) {
+    const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(courseName)}`;
+    const bookUrl = `https://www.google.com/search?tbm=bks&q=${encodeURIComponent(courseName + " technical guide")}`;
+    
+    aiLibrarySection.innerHTML = `
+      <div style="background: var(--bg-elevated); padding: 15px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+        <p style="font-size: 13px; color: var(--text); margin-bottom: 15px; line-height: 1.5;">
+          AI has indexed the complete knowledge base for <strong>${courseName}</strong>. You can read the full theory and technical documentation below.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a href="${wikiUrl}" target="_blank" class="btn btn-outline" style="width: 100%; font-size: 12px; justify-content: flex-start; gap: 10px; padding: 12px;">
+            <span>📖</span> Read Full Wikipedia Article
+          </a>
+          <a href="${bookUrl}" target="_blank" class="btn btn-primary" style="width: 100%; font-size: 12px; justify-content: flex-start; gap: 10px; padding: 12px;">
+            <span>📚</span> Open AI-Curated Book List
+          </a>
+        </div>
+        <p style="font-size: 10px; color: var(--muted); margin-top: 12px; text-align: center;">
+          Synchronized with Global Technical Archives
+        </p>
+      </div>
+    `;
   }
 
   const columns = pathContainer.querySelectorAll(".path-column-body");

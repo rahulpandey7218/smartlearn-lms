@@ -15,12 +15,8 @@ app.use(cors());
 app.use(express.json());
 
 // --- SHARED DATA STORE (For Prototype Synchronization) ---
-// This data is shared across all roles (Admin, Instructor, Student)
+// Note: Courses are now persisted in Oracle DB for 100% data reliability.
 let sharedData = {
-  courses: [
-    { id: 1, name: "Web Development Fundamentals", enrolled: 32, status: "Live", createdBy: "Admin" },
-    { id: 2, name: "Database Management Systems", enrolled: 28, status: "Live", createdBy: "Admin" }
-  ],
   sessions: [
     { id: 1, text: "Today 7:00 PM · Web Dev · Layouts and Flexbox", instructor: "Dr. A. Sharma" },
     { id: 2, text: "Tomorrow 6:30 PM · DBMS · Normalisation and Keys", instructor: "Prof. R. Mehta" }
@@ -31,51 +27,58 @@ let sharedData = {
   ],
   activityLog: [
     "LMS initialized successfully."
-  ],
-  leaderboard: [
-    { name: "Rahul Pandey", points: 1250, certificates: 5 },
-    { name: "Ananya Singh", points: 1100, certificates: 4 },
-    { name: "Vikram Dev", points: 950, certificates: 3 },
-    { name: "Priya Das", points: 880, certificates: 3 },
-    { name: "Arjun Rao", points: 720, certificates: 2 }
   ]
 };
 
 // --- ROUTES FOR MANAGING DATA ---
 
-// 2. Courses API
-app.get("/api/courses", (req, res) => res.json(sharedData.courses));
+// 2. Courses API (PERSISTENT VIA ORACLE)
+app.get("/api/courses", (req, res) => {
+  withConnection(async connection => {
+    const result = await connection.execute(`SELECT COURSE_ID, NAME, DESCRIPTION, INSTRUCTOR FROM LMS_COURSES ORDER BY COURSE_ID`);
+    const courses = result.rows.map(row => ({
+      id: row[0],
+      name: row[1],
+      description: row[2],
+      instructor: row[3]
+    }));
+    res.json(courses);
+  }, res);
+});
 
 app.post("/api/courses", (req, res) => {
   const { name, description, instructor } = req.body;
-  const newCourse = { 
-    id: Date.now(), 
-    name, 
-    description: description || "New Course", 
-    instructor: instructor || "Admin" 
-  };
-  sharedData.courses.push(newCourse);
-  sharedData.activityLog.unshift(`New course "${name}" created by ${instructor || "Admin"}.`);
-  res.json({ success: true, course: newCourse });
+  withConnection(async connection => {
+    const id = Date.now();
+    await connection.execute(
+      `INSERT INTO LMS_COURSES (COURSE_ID, NAME, DESCRIPTION, INSTRUCTOR) VALUES (:id, :name, :description, :instructor)`,
+      { id, name, description: description || "New Course", instructor: instructor || "Admin" },
+      { autoCommit: true }
+    );
+    sharedData.activityLog.unshift(`New course "${name}" created by ${instructor || "Admin"}.`);
+    res.json({ success: true, course: { id, name, description, instructor } });
+  }, res);
 });
 
 app.put("/api/courses/:id", (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
-  const courseIndex = sharedData.courses.findIndex(c => c.id == id);
-  if (courseIndex > -1) {
-    sharedData.courses[courseIndex].name = name;
-    sharedData.courses[courseIndex].description = description;
+  withConnection(async connection => {
+    await connection.execute(
+      `UPDATE LMS_COURSES SET NAME = :name, DESCRIPTION = :description WHERE COURSE_ID = :id`,
+      { name, description, id },
+      { autoCommit: true }
+    );
     res.json({ success: true });
-  } else {
-    res.status(404).json({ error: "Course not found" });
-  }
+  }, res);
 });
 
 app.delete("/api/courses/:id", (req, res) => {
   const { id } = req.params;
-  sharedData.courses = sharedData.courses.filter(c => c.id != id);
-  res.json({ success: true });
+  withConnection(async connection => {
+    await connection.execute(`DELETE FROM LMS_COURSES WHERE COURSE_ID = :id`, { id }, { autoCommit: true });
+    res.json({ success: true });
+  }, res);
 });
 
 // 3. Sessions & Uploads API
@@ -186,6 +189,42 @@ app.post("/api/auth/verify-code", (req, res) => {
 // 6. Activity Log (For Admin)
 app.get("/api/activity", (req, res) => res.json(sharedData.activityLog));
 
+// 7. Student Enrollments (Strictly Isolated by Email)
+app.get("/api/enrollments/:email", (req, res) => {
+  const { email } = req.params;
+  withConnection(async connection => {
+    const result = await connection.execute(
+      `SELECT COURSE_NAME FROM STUDENT_ENROLLMENTS WHERE LOWER(STUDENT_EMAIL) = LOWER(:email)`,
+      { email }
+    );
+    const courses = result.rows.map(row => row[0]);
+    res.json(courses);
+  }, res);
+});
+
+app.post("/api/enrollments", (req, res) => {
+  const { email, courseName } = req.body;
+  withConnection(async connection => {
+    // Check if already enrolled
+    const check = await connection.execute(
+      `SELECT ENROLL_ID FROM STUDENT_ENROLLMENTS WHERE LOWER(STUDENT_EMAIL) = LOWER(:email) AND COURSE_NAME = :course`,
+      { email, course: courseName }
+    );
+    
+    if (check.rows.length > 0) {
+      return res.json({ success: true, message: "Already enrolled" });
+    }
+
+    const id = Date.now();
+    await connection.execute(
+      `INSERT INTO STUDENT_ENROLLMENTS (ENROLL_ID, STUDENT_EMAIL, COURSE_NAME) VALUES (:id, :email, :course)`,
+      { id, email, course: courseName },
+      { autoCommit: true }
+    );
+    res.json({ success: true });
+  }, res);
+});
+
 // Test connection and Sync Schema on startup
 (async () => {
   let connection;
@@ -195,7 +234,7 @@ app.get("/api/activity", (req, res) => res.json(sharedData.activityLog));
     
     // --- REAL-TIME LEADERBOARD SCHEMA SYNC ---
     // Ensure STUDENT_ACCOUNTS has POINTS and CERTIFICATES columns
-    console.log("🛠️ Syncing Database Schema for Real-Time Leaderboard...");
+    console.log("🛠️ Syncing Database Schema...");
     
     try {
       await connection.execute(`ALTER TABLE STUDENT_ACCOUNTS ADD (POINTS NUMBER DEFAULT 0, CERTIFICATES NUMBER DEFAULT 0)`);
@@ -204,7 +243,49 @@ app.get("/api/activity", (req, res) => res.json(sharedData.activityLog));
       if (e.errorNum === 1430) {
         console.log("ℹ️ Leaderboard columns already exist.");
       } else {
-        console.error("❌ Schema Sync Error:", e.message);
+        console.error("❌ Schema Sync Error (STUDENT_ACCOUNTS):", e.message);
+      }
+    }
+
+    // --- COURSES TABLE SCHEMA SYNC ---
+    try {
+      await connection.execute(`
+        CREATE TABLE LMS_COURSES (
+          COURSE_ID NUMBER PRIMARY KEY,
+          NAME VARCHAR2(255) NOT NULL,
+          DESCRIPTION VARCHAR2(1000),
+          INSTRUCTOR VARCHAR2(255)
+        )
+      `);
+      console.log("✅ Created LMS_COURSES table");
+      
+      // Insert initial demo data if table was just created
+      await connection.execute(`INSERT INTO LMS_COURSES (COURSE_ID, NAME, DESCRIPTION, INSTRUCTOR) VALUES (1, 'Web Development Fundamentals', 'Learn HTML, CSS, and JS from scratch.', 'Dr. A. Sharma')`);
+      await connection.execute(`INSERT INTO LMS_COURSES (COURSE_ID, NAME, DESCRIPTION, INSTRUCTOR) VALUES (2, 'Database Management Systems', 'Master SQL and Oracle Database.', 'Prof. R. Mehta')`, [], { autoCommit: true });
+    } catch (e) {
+      if (e.errorNum === 955) {
+        console.log("ℹ️ LMS_COURSES table already exists.");
+      } else {
+        console.error("❌ Schema Sync Error (LMS_COURSES):", e.message);
+      }
+    }
+
+    // --- ENROLLMENTS TABLE SCHEMA SYNC ---
+    try {
+      await connection.execute(`
+        CREATE TABLE STUDENT_ENROLLMENTS (
+          ENROLL_ID NUMBER PRIMARY KEY,
+          STUDENT_EMAIL VARCHAR2(255) NOT NULL,
+          COURSE_NAME VARCHAR2(255) NOT NULL,
+          ENROLLED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log("✅ Created STUDENT_ENROLLMENTS table for perfect isolation");
+    } catch (e) {
+      if (e.errorNum === 955) {
+        console.log("ℹ️ STUDENT_ENROLLMENTS table already exists.");
+      } else {
+        console.error("❌ Schema Sync Error (STUDENT_ENROLLMENTS):", e.message);
       }
     }
     

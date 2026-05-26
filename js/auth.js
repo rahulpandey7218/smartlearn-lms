@@ -242,6 +242,8 @@ async function handleLoginSubmit(event) {
     window.localStorage.setItem("smartlearn-user-role", role);
     window.localStorage.setItem("smartlearn-session-role", role);
     window.localStorage.setItem("smartlearn-user-name", data.name || "");
+    window.localStorage.setItem("smartlearn-session-email", emailValue); // Save email for API calls
+    
     if (role === "admin") {
       window.location.href = "dashboard-admin.html";
     } else if (role === "instructor") {

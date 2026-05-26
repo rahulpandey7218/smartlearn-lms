@@ -98,18 +98,17 @@ function getUserKey(baseKey) {
 
 const ENROLLED_KEY = "smartlearn-enrolled-courses";
 
-function getEnrolledCourses() {
-  const raw = window.localStorage.getItem(getUserKey(ENROLLED_KEY));
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw);
-  } catch (error) {
-    return [];
-  }
+async function getEnrolledCourses() {
+  const email = window.localStorage.getItem("smartlearn-session-email");
+  if (!email) return [];
+  const res = await fetch(`${API_BASE}/enrollments/${email}`);
+  return await res.json();
 }
 
-function setEnrolledCourses(list) {
-  window.localStorage.setItem(getUserKey(ENROLLED_KEY), JSON.stringify(list));
+async function setEnrolledCourses(courseName) {
+  const email = window.localStorage.getItem("smartlearn-session-email");
+  if (!email) return;
+  await postData("enrollments", { email, courseName });
 }
 
 async function renderAvailableCourses() {
@@ -117,7 +116,7 @@ async function renderAvailableCourses() {
   
   // Strict API Sync: Get only courses that exist in the Backend Database
   const allCourses = await fetchData("courses");
-  const enrolled = getEnrolledCourses();
+  const enrolled = await getEnrolledCourses();
   availableCoursesList.innerHTML = "";
 
   if (allCourses.length === 0) {
@@ -146,16 +145,15 @@ async function renderAvailableCourses() {
       </div>
     `;
 
-    row.querySelector("button").addEventListener("click", () => {
+    row.querySelector("button").addEventListener("click", async () => {
       if (!isEnrolled) {
-        enrolled.push(course.name);
-        setEnrolledCourses(enrolled);
+        await setEnrolledCourses(course.name);
         alert(`🎉 Successfully joined ${course.name}!`);
-        renderCourseProgress();
-        renderAvailableCourses();
+        await renderCourseProgress();
+        await renderAvailableCourses();
       }
-      // Set the context and go to path
-      window.localStorage.setItem("smartlearn-active-course", course.name);
+      // Set the context and go to path (User-Specific)
+      window.localStorage.setItem(getUserKey("smartlearn-active-course"), course.name);
       window.location.href = "learning-path.html";
     });
     availableCoursesList.appendChild(row);
@@ -167,41 +165,49 @@ async function renderCourseProgress() {
   
   // 1. Fetch latest courses from API to verify existence
   const allCourses = await fetchData("courses");
-  const enrolled = getEnrolledCourses();
+  const enrolled = await getEnrolledCourses();
   
-  // 2. Synchronize: Remove courses from Student's local list if they no longer exist in Backend
+  // 2. Synchronize: Ensure we only show courses that still exist in the database
   const validEnrolled = enrolled.filter(courseName => 
     allCourses.some(c => c.name === courseName)
   );
   
-  if (validEnrolled.length !== enrolled.length) {
-    setEnrolledCourses(validEnrolled);
-  }
-
   courseProgressList.innerHTML = "";
   
   if (!validEnrolled.length) {
-    courseProgressList.innerHTML = "<p class='dashboard-subtitle'>Join a course below to start learning.</p>";
+    courseProgressList.innerHTML = `
+      <div style="text-align: center; padding: 20px; border: 1px dashed var(--border-subtle); border-radius: 12px;">
+        <p class='dashboard-subtitle' style="margin-bottom: 0;">You haven't joined any active courses yet.</p>
+        <p style="font-size: 11px; color: var(--muted); margin-top: 5px;">Join a course below to start your personalized learning path.</p>
+      </div>`;
     return;
   }
 
   validEnrolled.forEach(name => {
+    // Get course details for ID
+    const courseData = allCourses.find(c => c.name === name);
+    const courseId = courseData ? courseData.id : "";
+    
     const row = document.createElement("div");
     row.className = "progress-row dashboard-progress-row";
     row.style.flexDirection = "column";
     row.style.alignItems = "flex-start";
     row.style.gap = "8px";
     row.style.marginBottom = "20px";
+    row.style.background = "var(--bg-elevated)";
+    row.style.padding = "15px";
+    row.style.borderRadius = "12px";
+    row.style.border = "1px solid var(--border-subtle)";
     
     row.innerHTML = `
       <div style="display: flex; justify-content: space-between; width: 100%;">
-        <span class="progress-label">${name}</span>
-        <span class="progress-value">20%</span>
+        <span class="progress-label" style="font-weight: 700; font-size: 15px;">${name}</span>
+        <span class="progress-value" style="color: var(--accent-strong); font-weight: bold;">In Progress</span>
       </div>
-      <div class="progress-bar" style="width: 100%;"><div class="progress-fill" style="width: 20%"></div></div>
-      <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-        <button class="btn btn-outline btn-compact" style="font-size: 10px; flex: 1;" onclick="goToPath('${name}')">Go to Session</button>
-        <button class="btn btn-primary btn-compact" style="font-size: 10px; flex: 1;" onclick="openQuiz('${name}')">AI Quiz</button>
+      <div class="progress-bar" style="width: 100%; height: 6px; background: var(--bg); border: 1px solid var(--border-subtle);"><div class="progress-fill" style="width: 35%; background: linear-gradient(90deg, var(--accent), var(--accent-strong));"></div></div>
+      <div style="display: flex; gap: 8px; width: 100%; margin-top: 8px;">
+        <button class="btn btn-outline btn-compact" style="font-size: 11px; flex: 1; border-radius: 8px;" onclick="goToPath('${name}')">Open Roadmap</button>
+        <button class="btn btn-primary btn-compact" style="font-size: 11px; flex: 1; border-radius: 8px;" onclick="openQuiz('${name}')">Start AI Quiz</button>
       </div>
     `;
     courseProgressList.appendChild(row);
@@ -209,7 +215,7 @@ async function renderCourseProgress() {
 }
 
 window.goToPath = function(courseName) {
-  window.localStorage.setItem("smartlearn-active-course", courseName);
+  window.localStorage.setItem(getUserKey("smartlearn-active-course"), courseName);
   window.location.href = "learning-path.html";
 };
 
@@ -503,11 +509,13 @@ window.closeCertificate = function() {
 };
 
 // Initial render
-renderCourseProgress();
-updateStreakDisplay();
-renderAnnouncements();
-renderAvailableCourses();
-renderLeaderboard();
+(async () => {
+  await renderCourseProgress();
+  updateStreakDisplay();
+  await renderAnnouncements();
+  await renderAvailableCourses();
+  await renderLeaderboard();
+})();
 
 if (planButton) planButton.addEventListener("click", generateStudyPlan);
 if (streakButton) streakButton.addEventListener("click", () => {
